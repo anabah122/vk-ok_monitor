@@ -1,8 +1,10 @@
-import time
+import time, os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+CONFIRMATION_CODE_VK = os.environ["CONFIRMATION_CODE_VK"]
+SECRET_KEY_VK_GROUP  = os.environ["SECRET_KEY_VK_GROUP"]
 
 LAST_ACTION_TIMESTAMP = time.time()
-
-CONFIRMATION_CODE = "9aedabf7"
-SECRET_KEY        = ""          #group key https://vk.com/club237530248?act=api 
-
 DB_PATH = "DB/db.db"
