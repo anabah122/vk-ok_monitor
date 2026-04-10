@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ошибка</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0c0c0c;
+  --surface: #141414;
+  --border:  rgba(255,255,255,0.07);
+  --text:    #d8d8d8;
+  --muted:   #555;
+  --muted2:  #888;
+  --minus:   #f87171;
+  --accent:  #a78bfa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px 48px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.icon { font-size: 32px; }
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.desc {
+  font-size: 12px;
+  color: var(--muted2);
+  line-height: 1.6;
+}
+
+/* секции — все скрыты по умолчанию */
+.section { display: none; }
+.section.active { display: contents; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="section" id="no_groups">
+    <div class="icon">🔒</div>
+    <div class="title">Нет доступных групп</div>
+    <div class="desc">У вашего аккаунта нет доступа ни к одной группе.<br>Обратитесь к администратору.</div>
+  </div>
+
+  <div class="section" id="no_group_selected">
+    <div class="icon">📋</div>
+    <div class="title">Группа не выбрана</div>
+    <div class="desc">отсутвует аргумент group_id=</code></div>
+  </div>
+
+  <div class="section" id="access_denied">
+    <div class="icon">⛔</div>
+    <div class="title">Нет доступа</div>
+    <div class="desc">У вас нет доступа к этой группе.</div>
+  </div>
+
+</div>
+
+<script>
+const hash = location.hash.replace("#", "") || "no_group_selected";
+const el = document.getElementById(hash);
+if (el) el.classList.add("active");
+</script>
+</body>
+</html>

@@ -1,42 +1,42 @@
-import sqlite3, _G
 
 TABLES = [
 
     # ── Стена ─────────────────────────────────────────────────────────
     """
     CREATE TABLE IF NOT EXISTS wall_post (
-        id          INTEGER PRIMARY KEY,
-        from_id     INTEGER,
-        owner_id    INTEGER,
-        text        TEXT,
-        date        INTEGER,
-        likes       INTEGER DEFAULT 0,
-        comments    INTEGER DEFAULT 0,
+        id           INTEGER PRIMARY KEY,
+        from_id      INTEGER,
+        group_id     INTEGER,
+        text         TEXT,
+        date         INTEGER,
+        likes        INTEGER DEFAULT 0,
+        comments     INTEGER DEFAULT 0,
         postponed_id INTEGER
     )
     """,
     """
     CREATE TABLE IF NOT EXISTS wall_reply (
-        id           INTEGER PRIMARY KEY,
-        from_id      INTEGER,
-        post_id      INTEGER,
-        post_owner_id INTEGER,
-        text         TEXT,
-        date         INTEGER
+        id       INTEGER PRIMARY KEY,
+        from_id  INTEGER,
+        post_id  INTEGER,
+        group_id INTEGER,
+        text     TEXT,
+        date     INTEGER
     )
     """,
     """
     CREATE TABLE IF NOT EXISTS wall_reply_delete (
-        id          INTEGER PRIMARY KEY,
-        owner_id    INTEGER,
-        deleter_id  INTEGER,
-        post_id     INTEGER
+        id         INTEGER PRIMARY KEY,
+        group_id   INTEGER,
+        deleter_id INTEGER,
+        post_id    INTEGER
     )
     """,
     """
     CREATE TABLE IF NOT EXISTS wall_schedule_post (
         id            INTEGER PRIMARY KEY,
-        schedule_time INTEGER
+        schedule_time INTEGER,
+        group_id      INTEGER
     )
     """,
 
@@ -51,6 +51,7 @@ TABLES = [
         object_id       INTEGER,
         thread_reply_id INTEGER,
         post_id         INTEGER,
+        group_id        INTEGER,
         created_at      INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -61,6 +62,7 @@ TABLES = [
         id        INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id   INTEGER,
         join_type TEXT,
+        group_id  INTEGER,
         joined_at INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -69,6 +71,7 @@ TABLES = [
         id       INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id  INTEGER,
         self     INTEGER,
+        group_id INTEGER,
         left_at  INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -80,6 +83,7 @@ TABLES = [
         unblock_date INTEGER,
         reason       INTEGER,
         comment      TEXT,
+        group_id     INTEGER,
         blocked_at   INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -89,6 +93,7 @@ TABLES = [
         admin_id     INTEGER,
         user_id      INTEGER,
         by_end_date  INTEGER,
+        group_id     INTEGER,
         unblocked_at INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -103,7 +108,8 @@ TABLES = [
         text                    TEXT,
         date                    INTEGER,
         conversation_message_id INTEGER,
-        has_attachments         INTEGER DEFAULT 0
+        has_attachments         INTEGER DEFAULT 0,
+        group_id                INTEGER
     )
     """,
     """
@@ -111,6 +117,7 @@ TABLES = [
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id    INTEGER,
         key        TEXT,
+        group_id   INTEGER,
         created_at INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -118,6 +125,7 @@ TABLES = [
     CREATE TABLE IF NOT EXISTS message_deny (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id    INTEGER,
+        group_id   INTEGER,
         created_at INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -138,6 +146,7 @@ TABLES = [
         event_id                TEXT,
         payload                 TEXT,
         conversation_message_id INTEGER,
+        group_id                INTEGER,
         created_at              INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -147,6 +156,7 @@ TABLES = [
     CREATE TABLE IF NOT EXISTS photo (
         id       INTEGER PRIMARY KEY,
         owner_id INTEGER,
+        group_id INTEGER,
         text     TEXT,
         date     INTEGER
     )
@@ -159,7 +169,8 @@ TABLES = [
         photo_id       INTEGER,
         photo_owner_id INTEGER,
         text           TEXT,
-        date           INTEGER
+        date           INTEGER,
+        group_id       INTEGER
     )
     """,
     """
@@ -168,7 +179,8 @@ TABLES = [
         photo_id       INTEGER,
         photo_owner_id INTEGER,
         deleter_id     INTEGER,
-        user_id        INTEGER
+        user_id        INTEGER,
+        group_id       INTEGER
     )
     """,
 
@@ -177,6 +189,7 @@ TABLES = [
     CREATE TABLE IF NOT EXISTS video (
         id       INTEGER PRIMARY KEY,
         owner_id INTEGER,
+        group_id INTEGER,
         title    TEXT,
         duration INTEGER,
         date     INTEGER
@@ -190,7 +203,8 @@ TABLES = [
         video_id       INTEGER,
         video_owner_id INTEGER,
         text           TEXT,
-        date           INTEGER
+        date           INTEGER,
+        group_id       INTEGER
     )
     """,
     """
@@ -199,7 +213,8 @@ TABLES = [
         owner_id   INTEGER,
         user_id    INTEGER,
         deleter_id INTEGER,
-        video_id   INTEGER
+        video_id   INTEGER,
+        group_id   INTEGER
     )
     """,
 
@@ -211,6 +226,7 @@ TABLES = [
         poll_id    INTEGER,
         option_id  INTEGER,
         user_id    INTEGER,
+        group_id   INTEGER,
         created_at INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -221,6 +237,7 @@ TABLES = [
         user_id    INTEGER,
         level_old  INTEGER,
         level_new  INTEGER,
+        group_id   INTEGER,
         created_at INTEGER DEFAULT (strftime('%s','now'))
     )
     """,
@@ -230,20 +247,22 @@ TABLES = [
         from_id     INTEGER,
         amount      INTEGER,
         description TEXT,
-        date        INTEGER
+        date        INTEGER,
+        group_id    INTEGER
     )
     """,
 ]
 
+import sqlite3
 
 def create_db():
-    conn = sqlite3.connect(_G.DB_PATH)
+    conn = sqlite3.connect('DB/db.db')
     cur  = conn.cursor()
     for sql in TABLES:
         cur.execute(sql)
     conn.commit()
     conn.close()
-    print(f"БД создана: {_G.DB_PATH}")
+    print(f"БД создана: {'DB/db.db'}")
     print(f"Таблиц: {len(TABLES)}")
 
 

@@ -3,7 +3,7 @@ from DB import db
 
 class LikesMixin:
 
-    def on_like_add(self, o):
+    def on_like_add(self, o, group_id=None):
         liker    = o.get("liker_id")
         obj_type = o.get("object_type")
         obj_id   = o.get("object_id")
@@ -15,10 +15,10 @@ class LikesMixin:
             "event_type": "like_add", "liker_id": liker,
             "object_type": obj_type, "object_owner_id": owner_id,
             "object_id": obj_id, "thread_reply_id": o.get("thread_reply_id"),
-            "post_id": post_id,
+            "post_id": post_id, "group_id": group_id,
         })
 
-    def on_like_remove(self, o):
+    def on_like_remove(self, o, group_id=None):
         liker    = o.get("liker_id")
         obj_type = o.get("object_type")
         obj_id   = o.get("object_id")
@@ -28,5 +28,5 @@ class LikesMixin:
             "event_type": "like_remove", "liker_id": liker,
             "object_type": obj_type, "object_owner_id": owner_id,
             "object_id": obj_id, "thread_reply_id": o.get("thread_reply_id"),
-            "post_id": o.get("post_id"),
+            "post_id": o.get("post_id"), "group_id": group_id,
         })

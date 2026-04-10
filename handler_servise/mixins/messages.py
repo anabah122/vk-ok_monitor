@@ -8,7 +8,7 @@ def _ts(unix):
 
 class MessagesMixin:
 
-    def on_message_new(self, o):
+    def on_message_new(self, o, group_id=None):
         msg     = o.get("message", {})
         mid     = msg.get("id")
         from_id = msg.get("from_id")
@@ -24,9 +24,10 @@ class MessagesMixin:
             "text": msg.get("text", ""), "date": date,
             "conversation_message_id": msg.get("conversation_message_id"),
             "has_attachments": 1 if atts else 0,
+            "group_id": group_id,
         })
 
-    def on_message_reply(self, o):
+    def on_message_reply(self, o, group_id=None):
         mid     = o.get("id")
         text    = o.get("text", "")[:80]
         peer_id = o.get("peer_id")
@@ -36,10 +37,10 @@ class MessagesMixin:
             "from_id": o.get("from_id"), "peer_id": peer_id,
             "text": o.get("text", ""), "date": o.get("date", 0),
             "conversation_message_id": o.get("conversation_message_id"),
-            "has_attachments": 0,
+            "has_attachments": 0, "group_id": group_id,
         })
 
-    def on_message_edit(self, o):
+    def on_message_edit(self, o, group_id=None):
         mid     = o.get("id")
         text    = o.get("text", "")[:80]
         peer_id = o.get("peer_id")
@@ -49,26 +50,26 @@ class MessagesMixin:
             "from_id": o.get("from_id"), "peer_id": peer_id,
             "text": o.get("text", ""), "date": o.get("date", 0),
             "conversation_message_id": o.get("conversation_message_id"),
-            "has_attachments": 0,
+            "has_attachments": 0, "group_id": group_id,
         })
 
-    def on_message_allow(self, o):
+    def on_message_allow(self, o, group_id=None):
         user = o.get("user_id")
         print(f"  ✅ Пользователь {user} разрешил сообщения от сообщества")
-        db.insert("message_allow", {"user_id": user, "key": o.get("key", "")})
+        db.insert("message_allow", {"user_id": user, "key": o.get("key", ""), "group_id": group_id})
 
-    def on_message_deny(self, o):
+    def on_message_deny(self, o, group_id=None):
         user = o.get("user_id")
         print(f"  🚫 Пользователь {user} запретил сообщения от сообщества")
-        db.insert("message_deny", {"user_id": user})
+        db.insert("message_deny", {"user_id": user, "group_id": group_id})
 
-    def on_message_read(self, o):
+    def on_message_read(self, o, group_id=None):
         from_id = o.get("from_id")
         peer_id = o.get("peer_id")
         msg_id  = o.get("read_message_id")
         print(f"  👁️  Сообщение #{msg_id} прочитано: {from_id} → {peer_id}")
 
-    def on_message_event(self, o):
+    def on_message_event(self, o, group_id=None):
         user    = o.get("user_id")
         peer_id = o.get("peer_id")
         payload = o.get("payload", "")
@@ -77,4 +78,5 @@ class MessagesMixin:
             "user_id": user, "peer_id": peer_id,
             "event_id": o.get("event_id"), "payload": str(payload),
             "conversation_message_id": o.get("conversation_message_id"),
+            "group_id": group_id,
         })

@@ -6,10 +6,24 @@ import time
 app = FastAPI()
 import logger # disable logging on stats/json_data
 
-from frontend_servise.stats_router import router as stats_router
-app.include_router(stats_router, prefix="/stats")
 
-action = CallbackAction()
+from fastapi import Depends
+from auth_service.auth_core import require_auth
+
+from auth_service.auth_router import router as auth_router
+app.include_router(auth_router)
+
+
+from frontend_servise.main_router import router as main_router
+from frontend_servise.stats.stats_router import router as stats_router, cache_instance
+
+app.include_router(main_router, dependencies=[Depends(require_auth)])
+app.include_router(stats_router, prefix="/stats", dependencies=[Depends(require_auth)])
+
+
+
+
+action = CallbackAction(cache=cache_instance)
 
 @app.post("/vk_callback")
 async def callback_route(request: Request):

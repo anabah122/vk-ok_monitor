@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0a0a0a;
+  --surface: #111;
+  --border:  rgba(255,255,255,0.1);
+  --text:    #d8d8d8;
+  --muted:   #555;
+  --accent:  #a78bfa;
+  --minus:   #f87171;
+  --radius:  10px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px 40px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.field input {
+  background: #0c0c0c;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+}
+
+button[type=submit] {
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px;
+  transition: opacity 0.15s;
+}
+
+button[type=submit]:hover { opacity: 0.85; }
+
+.error {
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: 6px;
+  color: var(--minus);
+  font-size: 12px;
+  padding: 9px 12px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Вход</h1>
+  <!--ERROR-->
+  <form method="post" action="/login" style="display:contents">
+    <div class="field">
+      <label>Логин</label>
+      <input type="text" name="username" autocomplete="username" required autofocus>
+    </div>
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit">Войти</button>
+  </form>
+</div>
+</body>
+</html>

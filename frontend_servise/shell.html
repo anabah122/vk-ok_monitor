@@ -16,16 +16,11 @@
   --accent:  #a78bfa;
 }
 
-/* ── scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
-
-html {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.12) transparent;
-}
+html { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
 
 body {
   background: var(--bg);
@@ -37,7 +32,6 @@ body {
   align-items: center;
 }
 
-/* ── menu bar ── */
 .menu-bar {
   width: 80%;
   max-width: 1400px;
@@ -50,12 +44,24 @@ body {
   align-items: center;
   gap: 8px;
   min-height: 42px;
-  color: var(--muted);
   font-size: 12px;
   letter-spacing: 0.04em;
 }
 
-/* ── content container ── */
+.menu-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.menu-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+.menu-btn.active { border-color: var(--accent); color: var(--accent); }
+
 .content {
   width: 80%;
   max-width: 1400px;
@@ -78,7 +84,7 @@ body {
 <body>
 
 <div class="menu-bar" id="menu">
-  <!-- placeholder for future menu items -->
+  <button class="menu-btn" id="btn-groups" onclick="loadGroupMenu()">Группы</button>
 </div>
 
 <div class="content">
@@ -86,29 +92,48 @@ body {
 </div>
 
 <script>
-// Pass parent query params to iframe
-const qs = location.search || "";
-document.getElementById('content-frame').src = "/stats/data" + qs;
-// Auto-resize iframe to its content height — no iframe scrollbar
+const frame = document.getElementById("content-frame");
+
 function resizeFrame() {
-  const f = document.getElementById('content-frame');
   try {
-    const h = f.contentDocument.documentElement.scrollHeight;
-    if (h > 0) f.style.height = h + 'px';
+    const h = frame.contentDocument.documentElement.scrollHeight;
+    if (h > 0) frame.style.height = h + "px";
   } catch(e) {}
 }
 
-const frame = document.getElementById('content-frame');
-frame.addEventListener('load', () => {
+frame.addEventListener("load", () => {
   resizeFrame();
-  // Watch for content changes inside iframe
   try {
     const obs = new MutationObserver(resizeFrame);
     obs.observe(frame.contentDocument.body, { childList: true, subtree: true, attributes: true });
   } catch(e) {}
-  // Fallback periodic resize
   setInterval(resizeFrame, 2500);
 });
+
+function loadGroupMenu() {
+  document.getElementById("btn-groups").classList.add("active");
+  frame.src = "/group-menu";
+}
+
+function loadStats(group_id) {
+  document.getElementById("btn-groups").classList.remove("active");
+  frame.src = "/stats?group_id=" + group_id;
+  history.replaceState(null, "", "/?group_id=" + group_id);
+}
+
+window.addEventListener("message", (e) => {
+  if (e.data?.type === "select_group") {
+    loadStats(e.data.group_id);
+  }
+});
+
+const qs = new URLSearchParams(location.search);
+const gid = qs.get("group_id");
+if (gid) {
+  loadStats(gid);
+} else {
+  loadGroupMenu();
+}
 </script>
 </body>
 </html>
