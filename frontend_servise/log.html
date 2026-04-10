@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лог событий</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+html { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+
+:root {
+  --bg:        #0c0c0c;
+  --surface:   #141414;
+  --surface2:  #1c1c1c;
+  --border:    rgba(255,255,255,0.07);
+  --text:      #d8d8d8;
+  --muted:     #555;
+  --muted2:    #888;
+  --accent2:   #34d399;
+  --accent:    #a78bfa;
+  --accent3:   #fb923c;
+  --accent4:   #60a5fa;
+  --plus:      #4ade80;
+  --minus:     #f87171;
+  --radius-lg: 12px;
+}
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px; line-height: 1.4;
+  padding: 20px 24px 40px;
+}
+
+.log-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.log-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; padding: 8px 18px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 500; }
+tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 7px 18px; font-size: 12px; color: var(--text); }
+td.muted { color: var(--muted2); font-size: 11px; }
+.badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted2); background: var(--surface2); }
+.badge.plus   { color: var(--plus);   border-color: rgba(74,222,128,0.25);  background: rgba(74,222,128,0.07); }
+.badge.minus  { color: var(--minus);  border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.07); }
+.badge.accent { color: var(--accent); border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.07); }
+.badge.blue   { color: var(--accent4); border-color: rgba(96,165,250,0.25); background: rgba(96,165,250,0.07); }
+.badge.orange { color: var(--accent3); border-color: rgba(251,146,60,0.25); background: rgba(251,146,60,0.07); }
+
+.ftr { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.ftr-right { display: flex; gap: 16px; align-items: center; font-size: 11px; color: var(--muted); }
+#hdr-status { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<div class="log-card">
+  <div class="log-head"><span>Лог событий</span><span id="log-count"></span></div>
+  <table>
+    <thead><tr><th>Время</th><th>Тип</th><th>Событие</th><th>Детали</th></tr></thead>
+    <tbody id="log-tbody"><tr><td colspan="4" class="muted" style="padding:20px 18px">загрузка...</td></tr></tbody>
+  </table>
+</div>
+
+<div class="ftr">
+  <div class="ftr-right">
+    <span id="hdr-status">ожидание...</span>
+    <span id="ftr-updated"></span>
+  </div>
+</div>
+
+<script>
+const BADGE_CLS = { JOIN:"plus", LEAVE:"minus", LIKE:"accent", POST:"blue", COMMENT:"orange", MSG:"", PHOTO:"", VIDEO:"" };
+
+function el(id) { return document.getElementById(id); }
+
+function renderLog(rows) {
+  if (!rows || !rows.length) {
+    el("log-tbody").innerHTML = '<tr><td colspan="4" class="muted" style="padding:20px 18px">нет данных</td></tr>';
+    return;
+  }
+  el("log-count").textContent = "последние " + rows.length;
+  el("log-tbody").innerHTML = rows.map(r => {
+    const bc = BADGE_CLS[r.type] || "";
+    return '<tr><td class="muted">'+r.time+'</td><td><span class="badge '+bc+'">'+r.type+'</span></td><td>'+r.label+'</td><td class="muted">'+r.detail+'</td></tr>';
+  }).join("");
+}
+
+async function fetchLog() {
+  try {
+    const r = await fetch("/stats/json?with_log=true");
+    if (!r.ok) { el("hdr-status").textContent = "ошибка " + r.status; return; }
+    const d = await r.json();
+    renderLog(d.log_rows);
+    el("hdr-status").textContent = "ok";
+    el("ftr-updated").textContent = "обновлено " + new Date().toLocaleTimeString("ru-RU");
+  } catch(e) { el("hdr-status").textContent = "нет связи"; }
+}
+
+async function poll() {
+  try { const r = await fetch("/stats/is_data_invalid"); if(!r.ok) return; if(await r.json()) await fetchLog(); }
+  catch(e) { el("hdr-status").textContent = "нет связи"; }
+}
+
+fetchLog(); setInterval(poll, 2500);
+</script>
+</body>
+</html>

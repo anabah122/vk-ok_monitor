@@ -3,319 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VK Monitor</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>Статистика</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+html { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+
 :root {
-  --bg:      #0a0a0a;
-  --surface: #111111;
-  --surface2:#161616;
-  --border:  #222222;
-  --border2: #2a2a2a;
-  --text:    #e8e8e8;
-  --muted:   #555555;
-  --plus:    #4ade80;
-  --minus:   #f87171;
+  --bg:        #0c0c0c;
+  --surface:   #141414;
+  --surface2:  #1c1c1c;
+  --border:    rgba(255,255,255,0.07);
+  --text:      #d8d8d8;
+  --muted:     #555;
+  --muted2:    #888;
+  --accent:    #a78bfa;
+  --accent2:   #34d399;
+  --accent3:   #fb923c;
+  --accent4:   #60a5fa;
+  --plus:      #4ade80;
+  --minus:     #f87171;
+  --zero:      #555;
+  --radius:    8px;
+  --radius-lg: 12px;
 }
+
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px; line-height: 1.4;
+  padding: 20px 24px 40px;
 }
-.container {
-  width: 80%;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border);
-}
-.header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0.7rem 1.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.header-title { font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); }
-.header-right  { font-size: 0.7rem; color: var(--muted); display: flex; gap: 1.5rem; align-items: center; }
-.live-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--plus); display: inline-block; margin-right: 8px;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-.summary { display: flex; border-bottom: 1px solid var(--border); }
-.summary-block { flex: 1; padding: 1.1rem 1.4rem; border-right: 1px solid var(--border); }
-.summary-block:last-child { border-right: none; }
-.summary-title { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem; }
-.summary-row { display: flex; gap: 2rem; flex-wrap: wrap; }
-.stat { display: flex; flex-direction: column; gap: 0.2rem; }
-.stat-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-.stat-val { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--text); }
-.stat-sub { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
-.plus  { color: var(--plus);  }
+.ftr { display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; margin-bottom: 8px; padding: 14px 24px 0; border-top: 1px solid var(--border); }
+.ftr-right { display: flex; gap: 16px; align-items: center; font-size: 11px; color: var(--muted); }
+#hdr-status { color: var(--accent2); }
+
+.summary-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.s-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px 18px; flex: 1; min-width: 100px; }
+.s-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 5px; }
+.s-val { font-size: clamp(20px, 2vw, 28px); font-weight: 700; line-height: 1; color: var(--text); }
+.s-diff { font-size: 14px; font-weight: 600; margin-top: 4px; }
+.plus  { color: var(--plus); }
 .minus { color: var(--minus); }
-.zero  { color: var(--muted); }
+.zero  { color: var(--zero); }
 
-.log-header {
-  padding: 0.5rem 1.4rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.log-header-title { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
-.log-count { font-size: 0.62rem; color: var(--muted); }
-.log-wrap { overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; }
-thead tr { background: var(--surface); border-bottom: 1px solid var(--border2); position: sticky; top: 0; z-index: 1; }
-thead th { padding: 0.45rem 1.2rem; text-align: left; font-size: 0.62rem; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-tbody tr { border-bottom: 1px solid #181818; }
-tbody tr.zebra { background: #0d0d0d; }
-tbody tr:hover { background: var(--surface2); }
-tbody td { padding: 0.4rem 1.2rem; vertical-align: middle; white-space: nowrap; font-size: 0.85rem; }
-.muted { color: var(--muted); }
-.badge { display: inline-block; padding: 0.15rem 0.45rem; font-size: 0.62rem; letter-spacing: 0.12em; font-weight: 700; border-radius: 2px; background: #1a1a1a; color: var(--muted); border: 1px solid #2a2a2a; }
-.badge.plus  { color: var(--plus);  border-color: #1a3d28; background: #0d1f14; }
-.badge.minus { color: var(--minus); border-color: #3d1a1a; background: #1f0d0d; }
-.footer { background: var(--surface); border-top: 1px solid var(--border); padding: 0.45rem 1.4rem; display: flex; justify-content: space-between; }
-.footer span { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 14px; }
+.tab-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted2); font-size: 12px; padding: 5px 14px; cursor: pointer; transition: all 0.12s; font-family: inherit; }
+.tab-btn:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+.tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+@media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+.chart-card.wide { grid-column: 1 / -1; }
+.cc-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.cc-title { font-size: 12px; font-weight: 600; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.06em; }
+.chart-wrap { position: relative; width: 100%; height: 160px; }
+
+.legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted2); }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <div class="header">
-    <span class="header-title"><span class="live-dot"></span>vk // монитор сообщества</span>
-    <div class="header-right">
-      <span id="hdr-date">—</span>
-      <span id="hdr-status" style="color:var(--muted)">ожидание...</span>
+<!-- totals (all-time) -->
+<div class="summary-lable s-label" style="font-size: 1.05rem;">За все время</div>
+<div class="summary-row">
+  <div class="s-card"><div class="s-label">Участники</div><div class="s-val" id="t-members">—</div></div>
+  <div class="s-card"><div class="s-label">Посты</div><div class="s-val" id="t-posts">—</div></div>
+  <div class="s-card"><div class="s-label">Комменты</div><div class="s-val" id="t-comments">—</div></div>
+  <div class="s-card"><div class="s-label">Лайки</div><div class="s-val" id="t-likes">—</div></div>
+  <div class="s-card"><div class="s-label">Сообщения</div><div class="s-val" id="t-messages">—</div></div>
+  <div class="s-card"><div class="s-label">Фото</div><div class="s-val" id="t-photos">—</div></div>
+  <div class="s-card"><div class="s-label">Видео</div><div class="s-val" id="t-videos">—</div></div>
+</div>
+
+<!-- range buttons -->
+<div class="tab-bar-lable s-label" style="padding-top: 30px; font-size: 1.05rem;">За указаный промежуток времени</div>
+<div class="tab-bar">
+  <button class="tab-btn" onclick="setRange('month',this)">30 дней</button>
+  <button class="tab-btn active" onclick="setRange('week',this)">7 дней</button>
+  <button class="tab-btn" onclick="setRange('day',this)">24 часа</button>
+</div>
+
+<!-- period totals + delta -->
+<div class="summary-row">
+  <div class="s-card">
+    <div class="s-label">Участники</div>
+    <div class="s-val" id="p-joined">—</div>
+    <div class="s-diff" id="p-members-diff">—</div>
+  </div>
+  <div class="s-card"><div class="s-label">Посты</div><div class="s-val" id="p-posts">—</div></div>
+  <div class="s-card"><div class="s-label">Комменты</div><div class="s-val" id="p-comments">—</div></div>
+  <div class="s-card"><div class="s-label">Лайки</div><div class="s-val" id="p-likes">—</div></div>
+  <div class="s-card"><div class="s-label">Сообщения</div><div class="s-val" id="p-messages">—</div></div>
+  <div class="s-card"><div class="s-label">Фото</div><div class="s-val" id="p-photos">—</div></div>
+  <div class="s-card"><div class="s-label">Видео</div><div class="s-val" id="p-videos">—</div></div>
+</div>
+
+<!-- charts -->
+<div class="charts-grid">
+  <div class="chart-card wide">
+    <div class="cc-header"><span class="cc-title">Общая активность</span></div>
+    <div class="chart-wrap" style="height:200px"><canvas id="c-activity"></canvas></div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#a78bfa"></div>Посты</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#34d399"></div>Комменты</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fb923c"></div>Лайки</div>
     </div>
   </div>
-
-  <div class="summary">
-    <div class="summary-block">
-      <div class="summary-title">сегодня</div>
-      <div class="summary-row">
-        <div class="stat">
-          <span class="stat-label">участники</span>
-          <span class="stat-val" id="members_delta_fmt">—</span>
-          <span class="stat-sub" id="members_sub">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">посты</span>
-          <span class="stat-val" id="posts">—</span>
-          <span class="stat-sub" id="posts_diff">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">комменты</span>
-          <span class="stat-val" id="comments">—</span>
-          <span class="stat-sub" id="comments_diff">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">лайки</span>
-          <span class="stat-val" id="likes">—</span>
-          <span class="stat-sub" id="unlikes_sub">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">сообщения</span>
-          <span class="stat-val" id="messages">—</span>
-          <span class="stat-sub" id="messages_diff">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">медиа</span>
-          <span class="stat-val" id="photos">—</span>
-          <span class="stat-sub" id="media_sub">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="summary-block">
-      <div class="summary-title">7 дней</div>
-      <div class="summary-row">
-        <div class="stat">
-          <span class="stat-label">вступили</span>
-          <span class="stat-val plus" id="joined_week">—</span>
-          <span class="stat-sub" id="left_week_sub">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">посты</span>
-          <span class="stat-val" id="posts_week">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">лайки</span>
-          <span class="stat-val" id="likes_week">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">сообщения</span>
-          <span class="stat-val" id="messages_week">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="summary-block">
-      <div class="summary-title">всего</div>
-      <div class="summary-row">
-        <div class="stat">
-          <span class="stat-label">участников</span>
-          <span class="stat-val" id="total_members">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">постов</span>
-          <span class="stat-val" id="total_posts">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">фото</span>
-          <span class="stat-val" id="total_photos">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">видео</span>
-          <span class="stat-val" id="total_videos">—</span>
-        </div>
-      </div>
+  <div class="chart-card"><div class="cc-header"><span class="cc-title">Посты</span></div><div class="chart-wrap"><canvas id="c-posts"></canvas></div></div>
+  <div class="chart-card"><div class="cc-header"><span class="cc-title">Комменты</span></div><div class="chart-wrap"><canvas id="c-comments"></canvas></div></div>
+  <div class="chart-card"><div class="cc-header"><span class="cc-title">Лайки</span></div><div class="chart-wrap"><canvas id="c-likes"></canvas></div></div>
+  <div class="chart-card"><div class="cc-header"><span class="cc-title">Сообщения</span></div><div class="chart-wrap"><canvas id="c-messages"></canvas></div></div>
+  <div class="chart-card"><div class="cc-header"><span class="cc-title">Фото</span></div><div class="chart-wrap"><canvas id="c-photos"></canvas></div></div>
+  <div class="chart-card"><div class="cc-header"><span class="cc-title">Видео</span></div><div class="chart-wrap"><canvas id="c-videos"></canvas></div></div>
+  <div class="chart-card wide">
+    <div class="cc-header"><span class="cc-title">Участники</span></div>
+    <div class="chart-wrap"><canvas id="c-members"></canvas></div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#4ade80"></div>Вступили</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#f87171"></div>Ушли</div>
     </div>
   </div>
+</div>
 
-  <div class="log-header">
-    <span class="log-header-title">лог событий</span>
-    <span class="log-count" id="log-count">—</span>
+<!-- footer -->
+<div class="ftr">
+  <div class="ftr-right">
+    <span id="hdr-date"></span>
+    <span id="hdr-status">ожидание...</span>
+    <span id="ftr-updated"></span>
   </div>
-  <div class="log-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>дата / время</th>
-          <th>тип</th>
-          <th>событие</th>
-          <th>детали</th>
-        </tr>
-      </thead>
-      <tbody id="log-tbody"></tbody>
-    </table>
-  </div>
-
-  <div class="footer">
-    <span>vk community monitor · /stats/json</span>
-    <span id="ftr-updated">—</span>
-  </div>
-
 </div>
 
 <script>
-const TYPE_CLASS = { JOIN: "plus", LEAVE: "minus" };
+let state = {}, range = "week", charts = {};
 
-let state = {};
+const GRID = "rgba(255,255,255,0.05)", TICKC = "#444";
 
-function el(id) { return document.getElementById(id); }
-
-function cls(val, positive_cls, negative_cls) {
-  if (typeof val === "string") {
-    if (val.startsWith("+")) return positive_cls;
-    if (val.startsWith("-")) return negative_cls;
-  }
-  return "";
-}
-
-function render(d) {
-  // хедер
-  el("hdr-date").textContent = d.date || "—";
-
-  // участники
-  const mEl = el("members_delta_fmt");
-  mEl.textContent = d.members_delta_fmt || "—";
-  mEl.className = "stat-val " + (d.members_delta_class || "");
-  el("members_sub").textContent = "+" + d.members_joined + " вступили · −" + d.members_left + " ушли";
-
-  // посты
-  el("posts").textContent = d.posts ?? "—";
-  el("posts_diff").innerHTML = '<span class="' + (d.posts_diff_class||"") + '">' + (d.posts_diff_fmt||"—") + "</span> vs вчера";
-
-  // комменты
-  el("comments").textContent = d.comments ?? "—";
-  el("comments_diff").innerHTML = '<span class="' + (d.comments_diff_class||"") + '">' + (d.comments_diff_fmt||"—") + "</span> vs вчера";
-
-  // лайки
-  el("likes").textContent = d.likes ?? "—";
-  el("unlikes_sub").textContent = "−" + d.unlikes + " убрано";
-
-  // сообщения
-  el("messages").textContent = d.messages ?? "—";
-  el("messages_diff").innerHTML = '<span class="' + (d.messages_diff_class||"") + '">' + (d.messages_diff_fmt||"—") + "</span> vs вчера";
-
-  // медиа
-  el("photos").textContent = d.photos ?? "—";
-  el("media_sub").textContent = "фото · видео: " + (d.videos ?? "—");
-
-  // 7 дней
-  el("joined_week").textContent  = "+" + (d.joined_week ?? "—");
-  el("left_week_sub").textContent = "−" + (d.left_week ?? "—") + " ушли";
-  el("posts_week").textContent    = d.posts_week    ?? "—";
-  el("likes_week").textContent    = d.likes_week    ?? "—";
-  el("messages_week").textContent = d.messages_week ?? "—";
-
-  // всего
-  el("total_members").textContent = d.total_members ?? "—";
-  el("total_posts").textContent   = d.total_posts   ?? "—";
-  el("total_photos").textContent  = d.total_photos  ?? "—";
-  el("total_videos").textContent  = d.total_videos  ?? "—";
-
-  // лог
-  if (d.log_rows && d.log_rows.length) {
-    el("log-count").textContent = "последние " + d.log_rows.length + " · обновляется при запросе";
-    const tbody = el("log-tbody");
-    tbody.innerHTML = d.log_rows.map((row, i) => {
-      const badgeCls = TYPE_CLASS[row.type] || "";
-      const zebra = i % 2 === 0 ? ' class="zebra"' : "";
-      return '<tr' + zebra + '>'
-        + '<td class="muted">' + row.time + '</td>'
-        + '<td><span class="badge ' + badgeCls + '">' + row.type + '</span></td>'
-        + '<td>' + row.label + '</td>'
-        + '<td class="muted">' + row.detail + '</td>'
-        + '</tr>';
-    }).join("");
-  }
-
-  // футер
-  const now = new Date();
-  el("ftr-updated").textContent = "обновлено " + now.toLocaleTimeString("ru-RU");
-}
-
-async function poll() {
-  try {
-    const r = await fetch("/stats/is_data_invalid");
-    if (!r.ok) { el("hdr-status").textContent = "ошибка " + r.status; return; }
-    const invalid = await r.json();
-    if (!invalid) return;
-
-    const r2 = await fetch("/stats/json");
-    if (!r2.ok) return;
-    const d = await r2.json();
-    if (d && Object.keys(d).length) {
-      state = d;
-      render(state);
-      el("hdr-status").textContent = "ok";
+function baseOpts() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor:"#1a1a1a", borderColor:"rgba(255,255,255,0.1)", borderWidth:1, titleColor:"#d8d8d8", bodyColor:"#888", padding:10, cornerRadius:8 }
+    },
+    scales: {
+      x: { grid:{ color:GRID }, ticks:{ color:TICKC, font:{size:11}, autoSkip:false, maxRotation:0 }, border:{ color:"transparent" } },
+      y: { min:0, grid:{ color:GRID }, ticks:{ color:TICKC, font:{size:11}, precision:0 }, border:{ color:"transparent" } }
     }
-  } catch(e) {
-    el("hdr-status").textContent = "нет связи";
-    console.warn("poll error", e);
+  };
+}
+
+function ds(label, data, color) {
+  return { label, data, borderColor:color, backgroundColor:color+"18", borderWidth:2, pointRadius:3, pointBackgroundColor:color, tension:0.35, fill:false };
+}
+
+function mkChart(id, cfg) { if(charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), cfg); }
+function el(id) { return document.getElementById(id); }
+function getPeriod() { return state[range] || null; }
+
+function renderTotals(d) {
+  el("hdr-date").textContent   = d.date || "";
+  el("t-members").textContent  = d.total_members  ?? "—";
+  el("t-posts").textContent    = d.total_posts    ?? "—";
+  el("t-comments").textContent = d.total_comments ?? "—";
+  el("t-likes").textContent    = d.total_likes    ?? "—";
+  el("t-messages").textContent = d.total_messages ?? "—";
+  el("t-photos").textContent   = d.total_photos   ?? "—";
+  el("t-videos").textContent   = d.total_videos   ?? "—";
+}
+
+function renderPeriodRow() {
+  const p = getPeriod(); if(!p) return;
+  const t = p.totals;
+
+  el("p-joined").textContent = t.joined;
+  const net = t.joined - t.left;
+  const cls = net > 0 ? "plus" : net < 0 ? "minus" : "zero";
+  const fmt = net > 0 ? "+"+net : net === 0 ? "±0" : String(net);
+  el("p-members-diff").innerHTML = '<span style="color:var(--muted);font-size:10px;margin-right:4px;">чистый прирост:</span><span class="'+cls+'">'+fmt+'</span>';
+
+  function fmtVal(v) {
+    if (v == null) return '<span class="zero">—</span>';
+    if (v === 0)   return '<span class="zero">0</span>';
+    return '<span class="plus">+' + v + '</span>';
   }
+
+  el("p-posts").innerHTML    = fmtVal(t.posts);
+  el("p-comments").innerHTML = fmtVal(t.comments);
+  el("p-likes").innerHTML    = fmtVal(t.likes);
+  el("p-messages").innerHTML = fmtVal(t.messages);
+  el("p-photos").innerHTML   = fmtVal(t.photos);
+  el("p-videos").innerHTML   = fmtVal(t.videos);
+}
+
+function renderCharts() {
+  const p = getPeriod(); if(!p || !p.points.length) return;
+  const pts = p.points, labels = pts.map(p=>p.label);
+
+  mkChart("c-activity", { type:"line", data:{ labels, datasets:[
+    ds("Посты",pts.map(p=>p.posts),"#a78bfa"), ds("Комменты",pts.map(p=>p.comments),"#34d399"), ds("Лайки",pts.map(p=>p.likes),"#fb923c")
+  ]}, options:baseOpts() });
+  mkChart("c-posts",    { type:"line", data:{ labels, datasets:[ds("Посты",pts.map(p=>p.posts),"#a78bfa")] }, options:baseOpts() });
+  mkChart("c-comments", { type:"line", data:{ labels, datasets:[ds("Комменты",pts.map(p=>p.comments),"#34d399")] }, options:baseOpts() });
+  mkChart("c-likes",    { type:"line", data:{ labels, datasets:[ds("Лайки",pts.map(p=>p.likes),"#fb923c")] }, options:baseOpts() });
+  mkChart("c-messages", { type:"line", data:{ labels, datasets:[ds("Сообщения",pts.map(p=>p.messages),"#60a5fa")] }, options:baseOpts() });
+  mkChart("c-photos",   { type:"line", data:{ labels, datasets:[ds("Фото",pts.map(p=>p.photos),"#f472b6")] }, options:baseOpts() });
+  mkChart("c-videos",   { type:"line", data:{ labels, datasets:[ds("Видео",pts.map(p=>p.videos),"#facc15")] }, options:baseOpts() });
+  mkChart("c-members",  { type:"line", data:{ labels, datasets:[
+    ds("Вступили",pts.map(p=>p.joined),"#4ade80"), ds("Ушли",pts.map(p=>p.left),"#f87171")
+  ]}, options:baseOpts() });
+}
+
+function render(d) { renderTotals(d); renderPeriodRow(); renderCharts(); el("ftr-updated").textContent = "обновлено " + new Date().toLocaleTimeString("ru-RU"); }
+
+function setRange(r, btn) {
+  range = r;
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderPeriodRow(); renderCharts();
 }
 
 async function fetchJson() {
-  const r = await fetch("/stats/json");
-  const d = await r.json();
-  state = d;
-  render(state);
+  try { const r = await fetch("/stats/json"); if(!r.ok) return; const d = await r.json(); if(d && Object.keys(d).length){ state=d; render(state); el("hdr-status").textContent="ok"; } }
+  catch(e) { el("hdr-status").textContent = "нет связи"; }
 }
-
-fetchJson();
-setInterval(poll, 2500);
+async function poll() {
+  try { const r = await fetch("/stats/is_data_invalid"); if(!r.ok){ el("hdr-status").textContent="ошибка "+r.status; return; } if(await r.json()) await fetchJson(); }
+  catch(e) { el("hdr-status").textContent = "нет связи"; }
+}
+fetchJson(); setInterval(poll, 2500);
 </script>
 </body>
 </html>

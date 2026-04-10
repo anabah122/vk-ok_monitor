@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Панель управления</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0a0a0a;
+  --surface: #111;
+  --border:  rgba(255,255,255,0.1);
+  --text:    #d8d8d8;
+  --muted:   #666;
+  --accent:  #a78bfa;
+}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── menu bar ── */
+.menu-bar {
+  width: 80%;
+  max-width: 1400px;
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ── content container ── */
+.content {
+  width: 80%;
+  max-width: 1400px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.content iframe {
+  width: 100%;
+  border: none;
+  display: block;
+  overflow: hidden;
+}
+</style>
+</head>
+<body>
+
+<div class="menu-bar" id="menu">
+  <!-- placeholder for future menu items -->
+</div>
+
+<div class="content">
+  <iframe src="" id="content-frame" scrolling="no"></iframe>
+</div>
+
+<script>
+// Pass parent query params to iframe
+const qs = location.search || "";
+document.getElementById('content-frame').src = "/stats/data" + qs;
+// Auto-resize iframe to its content height — no iframe scrollbar
+function resizeFrame() {
+  const f = document.getElementById('content-frame');
+  try {
+    const h = f.contentDocument.documentElement.scrollHeight;
+    if (h > 0) f.style.height = h + 'px';
+  } catch(e) {}
+}
+
+const frame = document.getElementById('content-frame');
+frame.addEventListener('load', () => {
+  resizeFrame();
+  // Watch for content changes inside iframe
+  try {
+    const obs = new MutationObserver(resizeFrame);
+    obs.observe(frame.contentDocument.body, { childList: true, subtree: true, attributes: true });
+  } catch(e) {}
+  // Fallback periodic resize
+  setInterval(resizeFrame, 2500);
+});
+</script>
+</body>
+</html>
