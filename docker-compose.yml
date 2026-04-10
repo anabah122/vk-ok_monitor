@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - "80:7860"
+    restart: always
+    env_file:
+      - .env
