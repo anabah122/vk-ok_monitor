@@ -26,7 +26,7 @@ async def login(username: str = Form(...), password: str = Form(...)):
         return HTMLResponse(html, status_code=401)
 
     token    = create_session(user["id"], user["username"])
-    response = RedirectResponse(url="/stats", status_code=302)
+    response = RedirectResponse(url="/", status_code=302)
     response.set_cookie("session", token, httponly=True, samesite="lax")
     return response
 
