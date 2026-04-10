@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VK Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0a0a0a;
+  --surface: #111111;
+  --surface2:#161616;
+  --border:  #222222;
+  --border2: #2a2a2a;
+  --text:    #e8e8e8;
+  --muted:   #555555;
+  --plus:    #4ade80;
+  --minus:   #f87171;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+.container {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+}
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-title { font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); }
+.header-right  { font-size: 0.7rem; color: var(--muted); display: flex; gap: 1.5rem; align-items: center; }
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--plus); display: inline-block; margin-right: 8px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+.summary { display: flex; border-bottom: 1px solid var(--border); }
+.summary-block { flex: 1; padding: 1.1rem 1.4rem; border-right: 1px solid var(--border); }
+.summary-block:last-child { border-right: none; }
+.summary-title { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem; }
+.summary-row { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { display: flex; flex-direction: column; gap: 0.2rem; }
+.stat-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-val { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--text); }
+.stat-sub { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
+.plus  { color: var(--plus);  }
+.minus { color: var(--minus); }
+.zero  { color: var(--muted); }
+
+.log-header {
+  padding: 0.5rem 1.4rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.log-header-title { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.log-count { font-size: 0.62rem; color: var(--muted); }
+.log-wrap { overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface); border-bottom: 1px solid var(--border2); position: sticky; top: 0; z-index: 1; }
+thead th { padding: 0.45rem 1.2rem; text-align: left; font-size: 0.62rem; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+tbody tr { border-bottom: 1px solid #181818; }
+tbody tr.zebra { background: #0d0d0d; }
+tbody tr:hover { background: var(--surface2); }
+tbody td { padding: 0.4rem 1.2rem; vertical-align: middle; white-space: nowrap; font-size: 0.85rem; }
+.muted { color: var(--muted); }
+.badge { display: inline-block; padding: 0.15rem 0.45rem; font-size: 0.62rem; letter-spacing: 0.12em; font-weight: 700; border-radius: 2px; background: #1a1a1a; color: var(--muted); border: 1px solid #2a2a2a; }
+.badge.plus  { color: var(--plus);  border-color: #1a3d28; background: #0d1f14; }
+.badge.minus { color: var(--minus); border-color: #3d1a1a; background: #1f0d0d; }
+.footer { background: var(--surface); border-top: 1px solid var(--border); padding: 0.45rem 1.4rem; display: flex; justify-content: space-between; }
+.footer span { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <span class="header-title"><span class="live-dot"></span>vk // монитор сообщества</span>
+    <div class="header-right">
+      <span id="hdr-date">—</span>
+      <span id="hdr-status" style="color:var(--muted)">ожидание...</span>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-block">
+      <div class="summary-title">сегодня</div>
+      <div class="summary-row">
+        <div class="stat">
+          <span class="stat-label">участники</span>
+          <span class="stat-val" id="members_delta_fmt">—</span>
+          <span class="stat-sub" id="members_sub">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">посты</span>
+          <span class="stat-val" id="posts">—</span>
+          <span class="stat-sub" id="posts_diff">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">комменты</span>
+          <span class="stat-val" id="comments">—</span>
+          <span class="stat-sub" id="comments_diff">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">лайки</span>
+          <span class="stat-val" id="likes">—</span>
+          <span class="stat-sub" id="unlikes_sub">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">сообщения</span>
+          <span class="stat-val" id="messages">—</span>
+          <span class="stat-sub" id="messages_diff">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">медиа</span>
+          <span class="stat-val" id="photos">—</span>
+          <span class="stat-sub" id="media_sub">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-block">
+      <div class="summary-title">7 дней</div>
+      <div class="summary-row">
+        <div class="stat">
+          <span class="stat-label">вступили</span>
+          <span class="stat-val plus" id="joined_week">—</span>
+          <span class="stat-sub" id="left_week_sub">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">посты</span>
+          <span class="stat-val" id="posts_week">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">лайки</span>
+          <span class="stat-val" id="likes_week">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">сообщения</span>
+          <span class="stat-val" id="messages_week">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-block">
+      <div class="summary-title">всего</div>
+      <div class="summary-row">
+        <div class="stat">
+          <span class="stat-label">участников</span>
+          <span class="stat-val" id="total_members">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">постов</span>
+          <span class="stat-val" id="total_posts">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">фото</span>
+          <span class="stat-val" id="total_photos">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">видео</span>
+          <span class="stat-val" id="total_videos">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="log-header">
+    <span class="log-header-title">лог событий</span>
+    <span class="log-count" id="log-count">—</span>
+  </div>
+  <div class="log-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>дата / время</th>
+          <th>тип</th>
+          <th>событие</th>
+          <th>детали</th>
+        </tr>
+      </thead>
+      <tbody id="log-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span>vk community monitor · /stats/json</span>
+    <span id="ftr-updated">—</span>
+  </div>
+
+</div>
+
+<script>
+const TYPE_CLASS = { JOIN: "plus", LEAVE: "minus" };
+
+let state = {};
+
+function el(id) { return document.getElementById(id); }
+
+function cls(val, positive_cls, negative_cls) {
+  if (typeof val === "string") {
+    if (val.startsWith("+")) return positive_cls;
+    if (val.startsWith("-")) return negative_cls;
+  }
+  return "";
+}
+
+function render(d) {
+  // хедер
+  el("hdr-date").textContent = d.date || "—";
+
+  // участники
+  const mEl = el("members_delta_fmt");
+  mEl.textContent = d.members_delta_fmt || "—";
+  mEl.className = "stat-val " + (d.members_delta_class || "");
+  el("members_sub").textContent = "+" + d.members_joined + " вступили · −" + d.members_left + " ушли";
+
+  // посты
+  el("posts").textContent = d.posts ?? "—";
+  el("posts_diff").innerHTML = '<span class="' + (d.posts_diff_class||"") + '">' + (d.posts_diff_fmt||"—") + "</span> vs вчера";
+
+  // комменты
+  el("comments").textContent = d.comments ?? "—";
+  el("comments_diff").innerHTML = '<span class="' + (d.comments_diff_class||"") + '">' + (d.comments_diff_fmt||"—") + "</span> vs вчера";
+
+  // лайки
+  el("likes").textContent = d.likes ?? "—";
+  el("unlikes_sub").textContent = "−" + d.unlikes + " убрано";
+
+  // сообщения
+  el("messages").textContent = d.messages ?? "—";
+  el("messages_diff").innerHTML = '<span class="' + (d.messages_diff_class||"") + '">' + (d.messages_diff_fmt||"—") + "</span> vs вчера";
+
+  // медиа
+  el("photos").textContent = d.photos ?? "—";
+  el("media_sub").textContent = "фото · видео: " + (d.videos ?? "—");
+
+  // 7 дней
+  el("joined_week").textContent  = "+" + (d.joined_week ?? "—");
+  el("left_week_sub").textContent = "−" + (d.left_week ?? "—") + " ушли";
+  el("posts_week").textContent    = d.posts_week    ?? "—";
+  el("likes_week").textContent    = d.likes_week    ?? "—";
+  el("messages_week").textContent = d.messages_week ?? "—";
+
+  // всего
+  el("total_members").textContent = d.total_members ?? "—";
+  el("total_posts").textContent   = d.total_posts   ?? "—";
+  el("total_photos").textContent  = d.total_photos  ?? "—";
+  el("total_videos").textContent  = d.total_videos  ?? "—";
+
+  // лог
+  if (d.log_rows && d.log_rows.length) {
+    el("log-count").textContent = "последние " + d.log_rows.length + " · обновляется при запросе";
+    const tbody = el("log-tbody");
+    tbody.innerHTML = d.log_rows.map((row, i) => {
+      const badgeCls = TYPE_CLASS[row.type] || "";
+      const zebra = i % 2 === 0 ? ' class="zebra"' : "";
+      return '<tr' + zebra + '>'
+        + '<td class="muted">' + row.time + '</td>'
+        + '<td><span class="badge ' + badgeCls + '">' + row.type + '</span></td>'
+        + '<td>' + row.label + '</td>'
+        + '<td class="muted">' + row.detail + '</td>'
+        + '</tr>';
+    }).join("");
+  }
+
+  // футер
+  const now = new Date();
+  el("ftr-updated").textContent = "обновлено " + now.toLocaleTimeString("ru-RU");
+}
+
+async function poll() {
+  try {
+    const r = await fetch("/stats/is_data_invalid");
+    if (!r.ok) { el("hdr-status").textContent = "ошибка " + r.status; return; }
+    const invalid = await r.json();
+    if (!invalid) return;
+
+    const r2 = await fetch("/stats/json");
+    if (!r2.ok) return;
+    const d = await r2.json();
+    if (d && Object.keys(d).length) {
+      state = d;
+      render(state);
+      el("hdr-status").textContent = "ok";
+    }
+  } catch(e) {
+    el("hdr-status").textContent = "нет связи";
+    console.warn("poll error", e);
+  }
+}
+
+async function fetchJson() {
+  const r = await fetch("/stats/json");
+  const d = await r.json();
+  state = d;
+  render(state);
+}
+
+fetchJson();
+setInterval(poll, 500);
+</script>
+</body>
+</html>
