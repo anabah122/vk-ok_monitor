@@ -22,9 +22,9 @@ class CallbackAction(WallMixin, LikesMixin, MembersMixin, MediaMixin, MiscMixin,
             return "bad request"
 
         if data.get("type") == "confirmation":
-            return _G.CONFIRMATION_CODE
+            return _G.CONFIRMATION_CODE_VK
 
-        if _G.SECRET_KEY and data.get("secret") != _G.SECRET_KEY:
+        if _G.SECRET_KEY_VK_GROUP and data.get("secret") != _G.SECRET_KEY_VK_GROUP:
             return "forbidden"
         
         return None
