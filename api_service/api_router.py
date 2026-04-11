@@ -35,7 +35,7 @@ async def vk_callback(request: Request):
 
 # ── /api/groups ───────────────────────────────────────────────────────────────
 
-@api_router.get("/all_group_data")
+@api_router.get("/all_groups_data")
 def get_groups(user: AuthUser = Depends(require_role(1))):
     rows = DB.fetchall(
         "SELECT group_id, name, photo_url, members_count FROM group_data ORDER BY group_id"
