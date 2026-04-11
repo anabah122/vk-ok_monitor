@@ -1,9 +1,7 @@
-import DB.DB as DB
 import api_service.VkApi as VkApi
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from auth_service.auth_core import require_role, AuthUser
 
 api_router = APIRouter()
 
@@ -32,20 +30,3 @@ async def vk_callback(request: Request):
     return PlainTextResponse(CallbackAction(cache=cache_instance).dispatch(data))
  
 
-
-# ── /api/groups ───────────────────────────────────────────────────────────────
-
-@api_router.get("/all_groups_data")
-def get_groups(user: AuthUser = Depends(require_role(1))):
-    rows = DB.fetchall(
-        "SELECT group_id, name, photo_url, members_count FROM group_data ORDER BY group_id"
-    )
-    return {"groups": rows}
-
-
-# ── /api/update_confirm_code ──────────────────────────────────────────────────
-
-@api_router.get("/update_confirm_code")
-def update_confirm_code(id: int, code: str, user: AuthUser = Depends(require_role(1))):
-    DB.upsert("vk_servers", {"group_id": id, "confirm_code": code}, "group_id")
-    return {"ok": True, "group_id": id}

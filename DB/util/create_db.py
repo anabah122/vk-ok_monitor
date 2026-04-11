@@ -277,13 +277,13 @@ TABLES = [
 import sqlite3
 
 def create_db():
-    conn = sqlite3.connect('DB/db.db')
+    conn = sqlite3.connect('DB/main.db')
     cur  = conn.cursor()
     for sql in TABLES:
         cur.execute(sql)
     conn.commit()
     conn.close()
-    print(f"БД создана: {'DB/db.db'}")
+    print(f"БД создана: {'DB/main.db'}")
     print(f"Таблиц: {len(TABLES)}")
 
 

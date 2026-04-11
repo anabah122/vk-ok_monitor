@@ -4,6 +4,7 @@ import sqlite3, _G
 def get_conn():
     conn = sqlite3.connect(_G.DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 

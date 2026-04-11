@@ -19,10 +19,15 @@ app.include_router(main_router, dependencies=[Depends(require_auth)])
 app.include_router(stats_router, prefix="/stats", dependencies=[Depends(require_auth)])
 
 
-# API /api/* 
+# API /api/*
 from api_service.api_router import api_router
 app.include_router(api_router, prefix="/api")
 
+
+# Administration /mod/* 
+# only for admins role==99
+from administration_service.admin_router import admin_router
+app.include_router(admin_router, prefix="/mod")
 
 
 if __name__ == "__main__":

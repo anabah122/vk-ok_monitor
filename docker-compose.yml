@@ -6,3 +6,18 @@ services:
     restart: always
     env_file:
       - .env
+    volumes:
+      - db_data:/app/DB
+
+  poller:
+    build: .
+    command: python UserPoller/UserPoller.py
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - poller_data:/app/UserPoller
+
+volumes:
+  db_data:
+  poller_data:

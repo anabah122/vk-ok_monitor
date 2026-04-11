@@ -1,6 +1,9 @@
 import secrets
 from dataclasses import dataclass, field
-from fastapi import Cookie, Request, HTTPException
+from fastapi import Request, HTTPException, Security
+from fastapi.security import APIKeyCookie
+
+_cookie_scheme = APIKeyCookie(name="session", auto_error=False)
 
 from . import UsersDB
 
@@ -57,7 +60,7 @@ def get_user(token: str | None) -> AuthUser | None:
 
 
 # ── dependencies ───────────────────────────────────────────────────────────────
-def require_auth(request: Request, session: str | None = Cookie(default=None)):
+def require_auth(request: Request, session: str | None = Security(_cookie_scheme)):
     user = get_user(session)
     if not user:
         raise HTTPException(status_code=302, headers={"Location": "/login"})
@@ -65,7 +68,7 @@ def require_auth(request: Request, session: str | None = Cookie(default=None)):
 
 
 def require_role(min_role: int):
-    def dependency(request: Request, session: str | None = Cookie(default=None)):
+    def dependency(request: Request, session: str | None = Security(_cookie_scheme)):
         user = get_user(session)
         if not user:
             raise HTTPException(status_code=302, headers={"Location": "/login"})
