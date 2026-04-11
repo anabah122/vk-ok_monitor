@@ -1,4 +1,4 @@
-from DB import db
+from DB import DB
 
 JOIN_TYPES = {
     "join":     "вступил сам",
@@ -23,13 +23,13 @@ class MembersMixin:
         user_id   = o.get("user_id")
         join_type = o.get("join_type", "")
         print(f"  👤 Вступил {user_id} — {JOIN_TYPES.get(join_type, join_type)}")
-        db.insert("group_join", {"user_id": user_id, "join_type": join_type, "group_id": group_id})
+        DB.insert("group_join", {"user_id": user_id, "join_type": join_type, "group_id": group_id})
 
     def on_group_leave(self, o, group_id=None):
         user_id = o.get("user_id")
         self_   = o.get("self", 0)
         print(f"  🚪 Покинул {user_id} — {'сам вышел' if self_ else 'исключён'}")
-        db.insert("group_leave", {"user_id": user_id, "self": self_, "group_id": group_id})
+        DB.insert("group_leave", {"user_id": user_id, "self": self_, "group_id": group_id})
 
     def on_user_block(self, o, group_id=None):
         admin   = o.get("admin_id")
@@ -38,7 +38,7 @@ class MembersMixin:
         comment = o.get("comment", "")
         print(f"  🚫 Пользователь {user} заблокирован администратором {admin}")
         print(f"     Причина: {BLOCK_REASONS.get(reason, 'другое')}" + (f" | {comment}" if comment else ""))
-        db.insert("user_block", {
+        DB.insert("user_block", {
             "admin_id": admin, "user_id": user,
             "unblock_date": o.get("unblock_date"),
             "reason": reason, "comment": comment,
@@ -49,7 +49,7 @@ class MembersMixin:
         admin = o.get("admin_id")
         user  = o.get("user_id")
         print(f"  ✅ Пользователь {user} разблокирован администратором {admin}")
-        db.insert("user_unblock", {
+        DB.insert("user_unblock", {
             "admin_id": admin, "user_id": user,
             "by_end_date": o.get("by_end_date"),
             "group_id": group_id,

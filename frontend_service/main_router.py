@@ -12,7 +12,7 @@ async def shell(user: AuthUser = Depends(require_auth)):
     return HTMLResponse(html)
 
 
-@router.get("/api/groups")
+@router.get("/front/api/groups")
 async def user_groups(user: AuthUser = Depends(require_auth)):
     return JSONResponse({"group_ids": user.group_ids})
 

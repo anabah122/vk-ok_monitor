@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Панель управления</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0a0a0a;
+  --surface: #111;
+  --border:  rgba(255,255,255,0.08);
+  --text:    #d8d8d8;
+  --muted:   #555;
+  --accent:  #a78bfa;
+  --sidebar-w: 200px;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+html { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 10px;
+  gap: 4px;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.sidebar-logo {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 4px 10px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.menu-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.menu-btn.active { background: rgba(167,139,250,0.1); color: var(--accent); }
+
+.menu-btn svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.menu-btn.active svg { opacity: 1; }
+
+/* ── Main content ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.main iframe {
+  width: 100%;
+  min-height: 100vh;
+  border: none;
+  display: block;
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">Панель</div>
+
+  <button class="menu-btn" id="btn-groups" onclick="loadGroupMenu()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/>
+      <circle cx="11" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/>
+      <path d="M1 13c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <path d="M11 9c1.657 0 3 1.343 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+    Группы
+  </button>
+</nav>
+
+<main class="main">
+  <iframe src="" id="content-frame" scrolling="yes"></iframe>
+</main>
+
+<script>
+const frame = document.getElementById("content-frame");
+
+function setFrameHeight() {
+  // iframe takes full viewport height — scroll happens inside .main
+  frame.style.height = "100%";
+}
+
+frame.addEventListener("load", setFrameHeight);
+window.addEventListener("resize", setFrameHeight);
+setFrameHeight();
+
+function loadGroupMenu() {
+  setActive("btn-groups");
+  frame.src = "/group-menu";
+}
+
+function setActive(id) {
+  document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(id)?.classList.add("active");
+}
+
+function loadStats(group_id) {
+  setActive(null);
+  frame.src = "/stats?group_id=" + group_id;
+  history.replaceState(null, "", "/?group_id=" + group_id);
+}
+
+window.addEventListener("message", (e) => {
+  if (e.data?.type === "select_group") {
+    loadStats(e.data.group_id);
+  }
+});
+
+const qs = new URLSearchParams(location.search);
+const gid = qs.get("group_id");
+if (gid) {
+  loadStats(gid);
+} else {
+  loadGroupMenu();
+}
+</script>
+</body>
+</html>

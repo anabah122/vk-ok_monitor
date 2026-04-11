@@ -5,7 +5,6 @@
 import sqlite3
 import os
 
-import _G
 
 TABLES = [
     """
@@ -29,19 +28,26 @@ TABLES = [
         created_at INTEGER NOT NULL
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS user_roles (
+        user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        role_index INTEGER NOT NULL
+    )
+    """,
 ]
 
+_AUTH_DB_PATH = 'auth_service/users.db'
 
 def init():
-    os.makedirs(os.path.dirname(_G.AUTH_DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(_G.AUTH_DB_PATH)
+    os.makedirs(os.path.dirname(_AUTH_DB_PATH), exist_ok=True)
+    conn = sqlite3.connect(_AUTH_DB_PATH)
     cur  = conn.cursor()
     cur.execute("PRAGMA foreign_keys = ON")
     for sql in TABLES:
         cur.execute(sql)
     conn.commit()
     conn.close()
-    print(f"users.db готова: {_G.AUTH_DB_PATH}")
+    print(f"users.db готова: {_AUTH_DB_PATH}")
 
 
 if __name__ == "__main__":

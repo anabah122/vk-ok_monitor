@@ -4,7 +4,7 @@ import bcrypt
 from fastapi import APIRouter, Form, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import users_db
+from . import UsersDB
 from .auth_core import create_session, remove_session
 
 router = APIRouter()
@@ -18,7 +18,7 @@ async def login_page():
 
 @router.post("/login")
 async def login(username: str = Form(...), password: str = Form(...)):
-    user = users_db.get_user_by_username(username)
+    user = UsersDB.get_user_by_username(username)
     ok   = user and bcrypt.checkpw(password.encode(), user["password_hash"].encode())
     if not ok:
         html = (Path(__file__).parent / "login.html").read_text(encoding="utf-8")

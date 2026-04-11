@@ -1,6 +1,4 @@
 import sqlite3
-import os
-
 import _G
 
 
@@ -52,3 +50,11 @@ def delete_session(token: str) -> None:
     with get_conn() as conn:
         conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
         conn.commit()
+
+
+def get_user_role(user_id: int) -> int:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT role_index FROM user_roles WHERE user_id = ?", (user_id,)
+        ).fetchone()
+    return row["role_index"] if row else 0

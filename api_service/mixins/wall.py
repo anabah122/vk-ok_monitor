@@ -1,5 +1,5 @@
 from datetime import datetime
-from DB import db
+from DB import DB
 
 
 def _ts(unix):
@@ -18,7 +18,7 @@ class WallMixin:
         print(f"  📝 Новый пост #{pid} от {from_id} [{_ts(date)}]")
         print(f"     Текст: {text!r}")
         print(f"     Лайков: {likes} | Комментов: {cmts}")
-        db.insert("wall_post", {
+        DB.insert("wall_post", {
             "id": pid, "from_id": from_id, "group_id": group_id,
             "text": o.get("text", ""), "date": date,
             "likes": likes, "comments": cmts,
@@ -30,7 +30,7 @@ class WallMixin:
         from_id = o.get("from_id")
         text    = o.get("text", "")[:60]
         print(f"  🔁 Репост #{pid} от {from_id}: {text!r}")
-        db.insert("wall_post", {
+        DB.insert("wall_post", {
             "id": pid, "from_id": from_id, "group_id": group_id,
             "text": o.get("text", ""), "date": o.get("date", 0),
             "likes": o.get("likes", {}).get("count", 0),
@@ -45,7 +45,7 @@ class WallMixin:
         text    = o.get("text", "")[:80]
         print(f"  💬 Новый комментарий #{cid} к посту #{post_id} от {from_id}")
         print(f"     {text!r}")
-        db.insert("wall_reply", {
+        DB.insert("wall_reply", {
             "id": cid, "from_id": from_id, "post_id": post_id,
             "group_id": group_id,
             "text": o.get("text", ""), "date": o.get("date", 0),
@@ -56,7 +56,7 @@ class WallMixin:
         post_id = o.get("post_id")
         text    = o.get("text", "")[:80]
         print(f"  ✏️  Комментарий #{cid} к посту #{post_id} отредактирован: {text!r}")
-        db.insert("wall_reply", {
+        DB.insert("wall_reply", {
             "id": cid, "from_id": o.get("from_id"), "post_id": post_id,
             "group_id": group_id,
             "text": o.get("text", ""), "date": o.get("date", 0),
@@ -66,7 +66,7 @@ class WallMixin:
         cid     = o.get("id")
         post_id = o.get("post_id")
         print(f"  ♻️  Комментарий #{cid} к посту #{post_id} восстановлен")
-        db.insert("wall_reply", {
+        DB.insert("wall_reply", {
             "id": cid, "from_id": o.get("from_id"), "post_id": post_id,
             "group_id": group_id,
             "text": o.get("text", ""), "date": o.get("date", 0),
@@ -77,7 +77,7 @@ class WallMixin:
         post_id = o.get("post_id")
         deleter = o.get("deleter_id")
         print(f"  🗑️  Комментарий #{cid} к посту #{post_id} удалён пользователем {deleter}")
-        db.insert("wall_reply_delete", {
+        DB.insert("wall_reply_delete", {
             "id": cid, "group_id": group_id,
             "deleter_id": deleter, "post_id": post_id,
         })
@@ -86,10 +86,10 @@ class WallMixin:
         pid  = o.get("id")
         date = o.get("schedule_time", 0)
         print(f"  🕐 Отложенный пост #{pid} запланирован на {_ts(date)}")
-        db.insert("wall_schedule_post", {"id": pid, "schedule_time": date, "group_id": group_id})
+        DB.insert("wall_schedule_post", {"id": pid, "schedule_time": date, "group_id": group_id})
 
     def on_wall_schedule_post_delete(self, o, group_id=None):
         pid  = o.get("id")
         date = o.get("schedule_time", 0)
         print(f"  🗑️  Отложенный пост #{pid} (был на {_ts(date)}) удалён")
-        db.insert("wall_schedule_post", {"id": pid, "schedule_time": date, "group_id": group_id})
+        DB.insert("wall_schedule_post", {"id": pid, "schedule_time": date, "group_id": group_id})

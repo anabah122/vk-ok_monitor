@@ -251,6 +251,27 @@ TABLES = [
         group_id    INTEGER
     )
     """,
+    '''
+    CREATE TABLE IF NOT EXISTS group_data (
+        group_id     INTEGER PRIMARY KEY,
+        name         TEXT,
+        photo_url    TEXT,
+        members_count INTEGER,
+        updated_at   INTEGER
+    );
+    ''',
+    '''
+    CREATE TABLE IF NOT EXISTS vk_servers (
+        group_id     INTEGER PRIMARY KEY,
+        confirm_code TEXT
+    );
+    ''',
+    '''
+    CREATE TABLE IF NOT EXISTS vk_server_secrets (
+        group_id INTEGER PRIMARY KEY,
+        secret   TEXT NOT NULL
+    );
+    '''
 ]
 
 import sqlite3
